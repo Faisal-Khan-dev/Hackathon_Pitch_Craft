@@ -8,54 +8,60 @@ const GeneratePage = () => {
     tagline: "",
     pitch: "",
   });
-  const [logoUrl, setLogoUrl] = useState("");
   const [landingPageCode, setLandingPageCode] = useState("");
   const [iframeStatus, setIframeStatus] = useState(
     "Design generation is pending..."
   );
+  const [copyMessage, setCopyMessage] = useState("Copy HTML Code");
 
-  const API_KEY = "YOUR_API_KEY"; // Gemini / Google Generative Language API key
+  const API_KEY = "AIzaSyDEN5jNT31ag6m3tlCpY4H6w8ZqGjegdrA"; // Replace with your API key or leave for env injection
   const TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
-  const IMAGE_MODEL = "imagen-3.0-generate-002";
 
-  // --- Utility: Exponential backoff fetch ---
   const fetchWithRetry = async (url, options, retries = 0) => {
     try {
       const res = await fetch(url, options);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const errorJson = await res.json();
+        throw new Error(
+          `HTTP ${res.status} - ${errorJson.error?.message || "Unknown Error"}`
+        );
+      }
       return res.json();
     } catch (err) {
       if (retries < 5) {
-        await new Promise((r) => setTimeout(r, 1000 * 2 ** retries));
+        const delay = 1000 * Math.pow(2, retries) + Math.random() * 1000;
+        await new Promise((r) => setTimeout(r, delay));
         return fetchWithRetry(url, options, retries + 1);
       } else throw err;
     }
   };
 
   const handleGenerate = async () => {
-    if (!prompt.trim()) return alert("Please enter your startup idea first.");
+    const userIdea = prompt.trim();
+    if (!userIdea) return console.error("Please enter your startup idea.");
+
     setLoading(true);
     setIframeStatus("Starting generation...");
     setBranding({ name: "...", tagline: "...", pitch: "..." });
-    setLogoUrl("");
     setLandingPageCode("");
+    setCopyMessage("Copy HTML Code");
 
     try {
       // --------------------
       // Phase 1: Branding
       // --------------------
-      setIframeStatus("Phase 1/3: Generating Name, Tagline, and Pitch...");
+      setIframeStatus("Phase 1/2: Generating Name, Tagline, and Pitch...");
       const brandingRes = await fetchWithRetry(
         `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${API_KEY}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [{ parts: [{ text: userIdea }] }],
             systemInstruction: {
               parts: [
                 {
-                  text: "Generate a creative startup name, tagline, and 2-3 line pitch. Return JSON {name, tagline, pitch}.",
+                  text: "You are a creative business strategist. Based on the user's idea, generate a modern, catchy, and professional startup name, a compelling one-sentence tagline, and a concise 2-3 line pitch. The output MUST be a JSON object conforming to the schema.",
                 },
               ],
             },
@@ -74,37 +80,21 @@ const GeneratePage = () => {
           }),
         }
       );
+
       const brandingJSON = JSON.parse(
-        brandingRes.candidates?.[0]?.content?.parts?.[0]?.text
+        brandingRes.candidates?.[0]?.content?.parts?.[0]?.text || "{}"
       );
+
+      if (!brandingJSON.name) throw new Error("Branding generation failed.");
+
       setBranding(brandingJSON);
 
       // --------------------
-      // Phase 2: Logo
+      // Phase 2: Landing Page HTML
       // --------------------
-      setIframeStatus("Phase 2/3: Generating Logo...");
-      const logoRes = await fetchWithRetry(
-        `https://generativelanguage.googleapis.com/v1beta/models/${IMAGE_MODEL}:predict?key=${API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            instances: [
-              {
-                prompt: `Modern, minimalistic logo for '${brandingJSON.name}', representing '${prompt}', vector style, professional colors`,
-              },
-            ],
-            parameters: { sampleCount: 1, aspectRatio: "1:1" },
-          }),
-        }
-      );
-      const logoBase64 = logoRes.predictions?.[0]?.bytesBase64Encoded;
-      setLogoUrl(`data:image/png;base64,${logoBase64}`);
+      setIframeStatus("Phase 2/2: Generating Landing Page...");
+      const landingSystemPrompt = `You are an expert front-end developer. Generate a complete, single-file HTML document for a landing page. Use Tailwind CSS via CDN. Focus on the startup named: ${brandingJSON.name}, tagline: '${brandingJSON.tagline}', and pitch: '${brandingJSON.pitch}'. Include a hero section, features (3 points), testimonial/social proof, and a CTA button.`;
 
-      // --------------------
-      // Phase 3: Landing Page HTML
-      // --------------------
-      setIframeStatus("Phase 3/3: Generating Landing Page...");
       const landingRes = await fetchWithRetry(
         `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${API_KEY}`,
         {
@@ -114,53 +104,58 @@ const GeneratePage = () => {
             contents: [
               {
                 parts: [
-                  {
-                    text: "Generate a complete Tailwind CSS HTML landing page.",
-                  },
+                  { text: "Generate the complete, runnable HTML code now." },
                 ],
               },
             ],
-            systemInstruction: {
-              parts: [
-                {
-                  text: `You are a front-end expert. Create a responsive landing page for a startup named '${brandingJSON.name}' with tagline '${brandingJSON.tagline}' and pitch '${brandingJSON.pitch}'.`,
-                },
-              ],
-            },
+            systemInstruction: { parts: [{ text: landingSystemPrompt }] },
           }),
         }
       );
+
       const htmlCode =
         landingRes.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
       const cleanHTML = htmlCode
-        .replace(/```(html)?/g, "")
+        .replace(/```(html)?\n/g, "")
         .replace(/```$/g, "")
         .trim();
+
       setLandingPageCode(cleanHTML);
       setIframeStatus(`Design generated for ${brandingJSON.name}.`);
     } catch (err) {
-      console.error(err);
-      setIframeStatus("Error during generation. Check console for details.");
+      console.error("Generation Error:", err);
+      let statusMessage = `Error: ${err.message}`;
+      if (err.message.includes("HTTP 429")) {
+        statusMessage =
+          "Quota Limit Reached (429). Please wait or enable billing for continuous access.";
+      }
+      setIframeStatus(statusMessage);
+      setBranding({ name: "Error", tagline: "Error", pitch: "Error" });
     } finally {
       setLoading(false);
     }
   };
 
-  const copyCodeToClipboard = () => {
-    navigator.clipboard.writeText(landingPageCode);
-    alert("HTML code copied!");
+  const copyCodeToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(landingPageCode);
+      setCopyMessage("Code Copied!");
+      setTimeout(() => setCopyMessage("Copy HTML Code"), 3000);
+    } catch {
+      setCopyMessage("Failed to Copy!");
+      setTimeout(() => setCopyMessage("Copy HTML Code"), 3000);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6 pt-24 relative">
-      {/* Card */}
       <div className="relative w-full max-w-4xl bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border border-white/20">
         <h1 className="text-3xl font-bold text-white text-center mb-2">
           Generate Your Startup ✨
         </h1>
         <p className="text-slate-400 text-center mb-6">
-          Enter your idea below to get a brand identity, logo, and landing page
-          preview.
+          Enter your idea to get a brand identity and landing page preview.
         </p>
 
         {/* Prompt Form */}
@@ -175,58 +170,66 @@ const GeneratePage = () => {
           <button
             onClick={handleGenerate}
             disabled={loading}
-            className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-2xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-[1.02]"
+            className="w-full py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-2xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center"
           >
-            {loading ? "Generating..." : "Generate Startup"}
+            {loading ? (
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+            ) : (
+              "Generate Startup"
+            )}
           </button>
         </div>
 
         {/* Branding */}
         <div className="border-b border-white/20 pb-6 mb-6">
-          <h2 className="text-2xl font-bold text-white mb-4">
-            1. Brand Identity & Logo
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 space-y-4 text-white">
-              <p>
-                <span className="font-semibold text-blue-400">Name:</span>{" "}
-                {branding.name}
-              </p>
-              <p>
-                <span className="font-semibold text-blue-400">Tagline:</span>{" "}
-                {branding.tagline}
-              </p>
-              <p>
-                <span className="font-semibold text-blue-400">Pitch:</span>{" "}
-                {branding.pitch}
-              </p>
-            </div>
-            <div className="md:col-span-1 flex justify-center items-center">
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt="Startup Logo"
-                  className="w-32 h-32 rounded-2xl shadow-lg border-2 border-white/20"
-                />
-              ) : (
-                <span className="text-slate-400 p-2">Logo generating...</span>
-              )}
-            </div>
+          <h2 className="text-2xl font-bold text-white mb-4">Brand Identity</h2>
+          <div className="space-y-4 text-white text-sm sm:text-base">
+            <p>
+              <span className="font-semibold text-blue-400">Name:</span>{" "}
+              <span className="font-extrabold text-lg">{branding.name}</span>
+            </p>
+            <p>
+              <span className="font-semibold text-blue-400">Tagline:</span>{" "}
+              <span className="italic">{branding.tagline}</span>
+            </p>
+            <p>
+              <span className="font-semibold text-blue-400">Pitch:</span>{" "}
+              {branding.pitch}
+            </p>
           </div>
         </div>
 
         {/* Landing Page */}
         <div>
           <h2 className="text-2xl font-bold text-white mb-4">
-            2. Landing Page Preview
+            Landing Page Preview
           </h2>
           <div className="flex justify-end mb-3">
             <button
               onClick={copyCodeToClipboard}
-              disabled={!landingPageCode}
-              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-2xl disabled:bg-gray-400"
+              disabled={!landingPageCode || copyMessage === "Code Copied!"}
+              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-2xl disabled:bg-gray-400 transition duration-150"
             >
-              Copy HTML Code
+              {copyMessage}
             </button>
           </div>
           <div className="aspect-video w-full border-4 border-white/20 rounded-2xl overflow-hidden shadow-xl bg-white/10">
