@@ -2,9 +2,12 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import TextField from "../components/TextField"
 
 const Signup = () => {
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -13,6 +16,7 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
     try {
+      setLoading(true);
       const response = await createUserWithEmailAndPassword(
         auth,
         email,
@@ -20,7 +24,8 @@ const Signup = () => {
       );
       console.log("User signed up:", response.user);
       alert("Signup successful!");
-      navigate("/");
+      localStorage.setItem("uid", response.user.uid);
+      navigate("/dashboard");
     } catch (error) {
       alert(error.message);
     } finally {
@@ -67,7 +72,25 @@ const Signup = () => {
 
         {/* Signup Form */}
         <form onSubmit={signupHandler} className="space-y-6">
-          <input
+          <TextField
+            type="text"
+            placeholder="First name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            autoComplete="username"
+            required
+            className="w-full px-4 py-4 bg-slate-800/50 border border-slate-600/50 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <TextField
+            type="text"
+            placeholder="Last name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            autoComplete="username"
+            required
+            className="w-full px-4 py-4 bg-slate-800/50 border border-slate-600/50 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <TextField
             type="email"
             placeholder="Email address"
             value={email}
@@ -77,7 +100,7 @@ const Signup = () => {
             className="w-full px-4 py-4 bg-slate-800/50 border border-slate-600/50 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
-          <input
+          <TextField
             type="password"
             placeholder="Password"
             value={password}
@@ -97,7 +120,7 @@ const Signup = () => {
 
           <p className="text-center text-sm text-slate-400 mt-4">
             Already have an account?{" "}
-            <Link to="/" className="text-blue-400 hover:text-blue-300">
+            <Link to="/login" className="text-blue-400 hover:text-blue-300">
               Login
             </Link>
           </p>

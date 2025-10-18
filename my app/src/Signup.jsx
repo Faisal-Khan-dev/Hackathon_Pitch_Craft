@@ -156,7 +156,7 @@ export default function AuthForm() {
                 onChange={(e) => setSignupPassword(e.target.value)}
                 className="w-full px-4 py-4 bg-slate-800/50 border border-slate-600/50 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
               />
-              <input
+              <Text
                 type="password"
                 placeholder="Confirm password"
                 required
