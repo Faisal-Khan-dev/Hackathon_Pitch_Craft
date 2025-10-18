@@ -9,14 +9,20 @@ import CreatePitch from "./pages/CreatePitch";
 import GeneratedPitch from "./pages/GeneratedPitch";
 import ExportPitch from "./pages/ExportPitch";
 import AuthRoute from "./pages/routes/AuthRoute.jsx";
+import LandingPage from "./pages/landing.jsx";
+import Navbar from "./components/Navbar.jsx";
+import FeaturePage from "./pages/Featurepage.jsx";
 
 function App() {
   return (
     <>
       <BrowserRouter>
+      <Navbar />
         <Routes>
+            <Route path="/feature" element={<FeaturePage />} />
+            <Route index element={<LandingPage />} />
           <Route element={<AuthRoute />}>
-            <Route index element={<Login />} />
+            <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
           </Route>
 
