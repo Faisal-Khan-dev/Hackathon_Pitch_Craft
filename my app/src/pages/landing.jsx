@@ -15,7 +15,7 @@ const LandingPage = () => {
       </div>
 
       {/* Hero Section */}
-      <div className="relative z-10 flex flex-col items-center justify-center text-center px-6 py-32">
+      <div className="min-h-screen relative z-10 flex flex-col items-center justify-center text-center px-6 py-32">
         <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
           Welcome to PitchCraft 🚀
         </h1>
