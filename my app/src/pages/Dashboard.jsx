@@ -14,7 +14,7 @@ const GeneratePage = () => {
   );
   const [copyMessage, setCopyMessage] = useState("Copy HTML Code");
 
-  const API_KEY = "AIzaSyDEN5jNT31ag6m3tlCpY4H6w8ZqGjegdrA"; // Replace with your API key or leave for env injection
+  const API_KEY = "AIzaSyDEN5jNT31ag6m3tlCpY4H6w8ZqGjegdrA"; // Leave empty for environment injection
   const TEXT_MODEL = "gemini-2.5-flash-preview-09-2025";
 
   const fetchWithRetry = async (url, options, retries = 0) => {
@@ -47,9 +47,7 @@ const GeneratePage = () => {
     setCopyMessage("Copy HTML Code");
 
     try {
-      // --------------------
       // Phase 1: Branding
-      // --------------------
       setIframeStatus("Phase 1/2: Generating Name, Tagline, and Pitch...");
       const brandingRes = await fetchWithRetry(
         `https://generativelanguage.googleapis.com/v1beta/models/${TEXT_MODEL}:generateContent?key=${API_KEY}`,
@@ -84,14 +82,10 @@ const GeneratePage = () => {
       const brandingJSON = JSON.parse(
         brandingRes.candidates?.[0]?.content?.parts?.[0]?.text || "{}"
       );
-
       if (!brandingJSON.name) throw new Error("Branding generation failed.");
-
       setBranding(brandingJSON);
 
-      // --------------------
       // Phase 2: Landing Page HTML
-      // --------------------
       setIframeStatus("Phase 2/2: Generating Landing Page...");
       const landingSystemPrompt = `You are an expert front-end developer. Generate a complete, single-file HTML document for a landing page. Use Tailwind CSS via CDN. Focus on the startup named: ${brandingJSON.name}, tagline: '${brandingJSON.tagline}', and pitch: '${brandingJSON.pitch}'. Include a hero section, features (3 points), testimonial/social proof, and a CTA button.`;
 
@@ -115,12 +109,10 @@ const GeneratePage = () => {
 
       const htmlCode =
         landingRes.candidates?.[0]?.content?.parts?.[0]?.text || "";
-
       const cleanHTML = htmlCode
         .replace(/```(html)?\n/g, "")
         .replace(/```$/g, "")
         .trim();
-
       setLandingPageCode(cleanHTML);
       setIframeStatus(`Design generated for ${brandingJSON.name}.`);
     } catch (err) {
@@ -128,7 +120,7 @@ const GeneratePage = () => {
       let statusMessage = `Error: ${err.message}`;
       if (err.message.includes("HTTP 429")) {
         statusMessage =
-          "Quota Limit Reached (429). Please wait or enable billing for continuous access.";
+          "Quota Limit Reached (429). Wait or enable billing for continuous access.";
       }
       setIframeStatus(statusMessage);
       setBranding({ name: "Error", tagline: "Error", pitch: "Error" });
@@ -233,9 +225,10 @@ const GeneratePage = () => {
             </button>
           </div>
           <div className="aspect-video w-full border-4 border-white/20 rounded-2xl overflow-hidden shadow-xl bg-white/10">
+            {/* Safe sandbox: remove allow-same-origin to prevent escape */}
             <iframe
               className="w-full h-full"
-              sandbox="allow-scripts allow-same-origin"
+              sandbox="allow-scripts"
               srcDoc={landingPageCode}
             ></iframe>
           </div>
