@@ -1,4 +1,4 @@
-const TextField = ({ type = "text", className, placeholder, onChange, value }) => {
+const TextField = ({ type = "text",autoComplete, className, placeholder, onChange, value }) => {
   return (
     <input
       className={className}
@@ -6,6 +6,7 @@ const TextField = ({ type = "text", className, placeholder, onChange, value }) =
       placeholder={placeholder}
       onChange={onChange}
       value={value}
+      autoComplete={autoComplete}
     />
   );
 };

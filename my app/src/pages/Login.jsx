@@ -21,7 +21,7 @@ const Login = () => {
 
       localStorage.setItem("uid", response.user.uid);
 
-      navigate("./Dashboard");
+      navigate("/dashboard");
     } catch (error) {
       alert(error.message);
     }
@@ -30,21 +30,36 @@ const Login = () => {
   return (
     <div>
       <h1>LOGIN</h1>
-      <TextField
-        type="email"
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <br />
-      <TextField
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
-      <p>
-        Create Account? <Link to={"/Signup"}> Signup </Link>
-      </p>
-      <ButtonCmp title={"Login"} onClick={LoginHandler} />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault(); // prevent page reload
+          LoginHandler(); // call your login function
+        }}
+      >
+        <TextField
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
+          required
+        />
+        <TextField
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
+          required
+        />
+
+        <p>
+          Create Account? <Link to="/signup">Signup</Link>
+        </p>
+
+        {/* Use type="submit" so pressing Enter also triggers it */}
+        <ButtonCmp type="submit" title="Login" />
+      </form>
     </div>
   );
 };

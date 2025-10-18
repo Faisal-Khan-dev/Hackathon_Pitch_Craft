@@ -11,7 +11,10 @@ const Signup = () => {
 
   const navigate = useNavigate();
 
-  const signupHandler = async () => {
+  const signupHandler = async (e) => {
+
+    e.preventDefault();
+
     try {
       console.log("email", email);
       console.log("password", password);
@@ -26,28 +29,32 @@ const Signup = () => {
   return (
     <div>
       <h1>Sign-up</h1>
-      
-      <TextField
-        type="text"
-        placeholder="Email"
-        onChange={(e) => setEmail(e.target.value)}
-        value={email}
-        className=""
-      />
-      <br />
 
-      <TextField
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setpassword(e.target.value)}
-        value={password}
-      />
+      <form onSubmit={signupHandler}>
+        <TextField
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          autoComplete="username"
+          required
+        />
 
-      <p>
-        Already Account? <Link to={"/"}> login </Link>
-      </p>
-      {/* <button onClick={signupHandler}>Signup</button> */}
-      <ButtonCmp title={"Signup"} onClick={signupHandler} />
+        <TextField
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setpassword(e.target.value)}
+          autoComplete="new-password"
+          required
+        />
+
+        <p>
+          Already have an account? <Link to="/">Login</Link>
+        </p>
+
+        <ButtonCmp type="submit" title="Signup" />
+      </form>
     </div>
   );
 };
