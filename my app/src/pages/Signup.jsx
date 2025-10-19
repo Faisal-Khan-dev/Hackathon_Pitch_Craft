@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { auth } from "../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import TextField from "../components/TextField"
+import { toast } from "react-toastify";
 
 const Signup = () => {
   const [email, setEmail] = useState("");
@@ -23,7 +24,7 @@ const Signup = () => {
         password
       );
       console.log("User signed up:", response.user);
-      alert("Signup successful!");
+      toast.success("Signup successful!");
       localStorage.setItem("uid", response.user.uid);
       navigate("/dashboard");
     } catch (error) {

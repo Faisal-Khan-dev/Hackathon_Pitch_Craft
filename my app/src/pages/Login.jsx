@@ -4,7 +4,7 @@ import TextField from "../components/TextField";
 import ButtonCmp from "../components/ButtonCmp";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
-
+import { toast } from "react-toastify";
 const Login = () => {
   const navigate = useNavigate();
 
@@ -19,7 +19,7 @@ const Login = () => {
       localStorage.setItem("uid", response.user.uid);
       navigate("/dashboard");
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
-const Navbar = () => {
+const Navbar = ({show}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -29,18 +29,29 @@ const Navbar = () => {
           >
             Features
           </Link>
-          <Link
-            to="/login"
-            className="px-4 py-2 border border-white/30 text-white rounded-xl hover:bg-white/10 transition"
-          >
-            Login
-          </Link>
-          <Link
-            to="/signup"
-            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition"
-          >
-            Sign Up
-          </Link>
+          {show ? (
+            <div className="flex gap-4">
+              <Link
+                to="/login"
+                className="px-4 py-2 border border-white/30 text-white rounded-xl hover:bg-white/10 transition"
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition"
+              >
+                Sign Up
+              </Link>
+            </div>
+          ) : (
+            <Link
+              to="/dashboard"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition"
+            >
+              Generate
+            </Link>
+          )}
         </div>
 
         {/* Mobile Hamburger */}
@@ -99,20 +110,32 @@ const Navbar = () => {
           >
             Features
           </Link>
-          <Link
-            to="/login"
-            className="px-4 py-2 border border-white/30 text-white rounded-xl hover:bg-white/10 transition"
-            onClick={() => setIsOpen(false)}
-          >
-            Login
-          </Link>
-          <Link
-            to="/signup"
-            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition"
-            onClick={() => setIsOpen(false)}
-          >
-            Sign Up
-          </Link>
+
+          {show ? (
+            <div>
+              <Link
+                to="/login"
+                className="px-4 py-2 border border-white/30 text-white rounded-xl hover:bg-white/10 transition"
+                onClick={() => setIsOpen(false)}
+              >
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition"
+                onClick={() => setIsOpen(false)}
+              >
+                Sign Up
+              </Link>
+            </div>
+          ) : (
+            <Link
+              to="/dashboard"
+              className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition"
+            >
+              Generate
+            </Link>
+          )}
         </div>
       )}
     </nav>
